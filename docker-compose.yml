@@ -1,18 +1,31 @@
-version: "3.9"
+version: "3.8"
 
 services:
   stream-server:
     build: ./server
     container_name: stream-server
-    ports:
-      - "8001:8001"
-    restart: unless-stopped
+    restart: always
+    expose:
+      - "8001"
 
   nginx:
-    build: ./nginx
+    image: nginx:latest
     container_name: nginx
+    restart: always
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/www:/var/www/html
     depends_on:
       - stream-server
-    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/www:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --email manisubham09@gmail.com --agree-tos --no-eff-email -d airwave.stream.subhammani.xyz
